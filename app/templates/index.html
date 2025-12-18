@@ -1,0 +1,167 @@
+<!-- app/templates/index.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人生K线图 - 生辰八字分析</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .calendar-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .calendar-toggle label {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .calendar-toggle input:checked + label {
+            background-color: #4CAF50;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>人生K线图</h1>
+        <p style="text-align: center; color: #666;">输入您的生辰信息，获取专属命运分析</p>
+
+        <form id="birthForm">
+            <div class="calendar-toggle">
+                <input type="radio" id="gregorian" name="calendar_type" value="gregorian" checked>
+                <label for="gregorian">公历</label>
+
+                <input type="radio" id="lunar" name="calendar_type" value="lunar">
+                <label for="lunar">农历</label>
+            </div>
+
+            <div class="form-group">
+                <label for="year">出生年份：</label>
+                <input type="number" id="year" name="year" min="1900" max="2030" required>
+            </div>
+
+            <div class="form-group">
+                <label for="month">出生月份：</label>
+                <input type="number" id="month" name="month" min="1" max="12" required>
+            </div>
+
+            <div class="form-group">
+                <label for="day">出生日期：</label>
+                <input type="number" id="day" name="day" min="1" max="31" required>
+            </div>
+
+            <div class="form-group">
+                <label for="hour">出生小时：</label>
+                <input type="number" id="hour" name="hour" min="0" max="23" required>
+            </div>
+
+            <div class="form-group">
+                <label for="minute">出生分钟：</label>
+                <input type="number" id="minute" name="minute" min="0" max="59" value="0">
+            </div>
+
+            <div class="form-group">
+                <label for="is_leap">是否闰月（仅农历有效）：</label>
+                <select id="is_leap" name="is_leap">
+                    <option value="false">否</option>
+                    <option value="true">是</option>
+                </select>
+            </div>
+
+            <button type="submit">获取命运分析</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('birthForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // 收集表单数据
+            const formData = new FormData(this);
+            const data = {};
+            for (let [key, value] of formData.entries()) {
+                if (key === 'is_leap') {
+                    data[key] = value === 'true';
+                } else if (['year', 'month', 'day', 'hour', 'minute'].includes(key)) {
+                    data[key] = parseInt(value);
+                } else {
+                    data[key] = value;
+                }
+            }
+
+            // 发送请求
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    // 将结果存储到localStorage以便在结果页面显示
+                    localStorage.setItem('analysisResult', JSON.stringify(result.data));
+                    // 跳转到结果页面
+                    window.location.href = '/result';
+                } else {
+                    alert('分析失败：' + result.message);
+                }
+            } catch (error) {
+                alert('请求失败：' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>
